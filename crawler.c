@@ -43,7 +43,7 @@ int Check_Url(char* argv[])  // function to check wheater url is correct or not!
     }
 }
 
-int Check_Dir(char* argv[]) // function to check is available or not
+int Check_Dir(char* argv[]) // function to check dir is available or not and correct dir path is entered or not!!
 {
     struct stat statbuf;
     if( stat(argv[3],&statbuf) == -1)
@@ -64,7 +64,7 @@ int Check_Dir(char* argv[]) // function to check is available or not
     return 1;
 }
 
-void removeWhiteSpace(char* html)
+void removeWhiteSpace(char* html)  // function will remove all the white spaces from the temp file to make link searching bit faster!!
 {
   int i;
   char *buffer = malloc(strlen(html)+1), *p=malloc (sizeof(char)+1);
@@ -82,7 +82,7 @@ void removeWhiteSpace(char* html)
 }
 
 
-int GetNextURL(char* html, char* urlofthispage, char* result, int pos)
+int GetNextURL(char* html, char* urlofthispage, char* result, int pos) // function will fetch the url and its line no one by one!! we used line no to make searching faster!!
 {
   char c;
   int len, i, j;
@@ -172,7 +172,7 @@ int GetNextURL(char* html, char* urlofthispage, char* result, int pos)
   return -1;
 }
 
-char* convertData()
+char* convertData()  // function will contain all the data in the temp file in char array for searching links in it!!
 {
 	struct stat st;
 	stat("temp.txt", &st);
@@ -226,6 +226,51 @@ void get_Page(char *url)  // function to fetch url from user and contact in urlB
     Transfer_File();
 }
 
+void Fetch_Url(char *url)  // function will take url from nextGenurl function and put it in the array and check duplicay wheater url exits in array or not!!
+{
+    struct stat st;
+    stat("temp.txt", &st);
+    int File_Size = st.st_size;
+    File_Size++;
+
+	char *data = (char*)malloc(File_Size*sizeof(char));
+	data = convertData();
+
+	char *result = (char*)malloc(File_Size*sizeof(char));
+        int ans=0,flag=0,len=100,l=0;
+        char **links;
+
+    links=(char **)malloc(sizeof(char *)*101);
+    for(int i=0;i<100;i++)
+      links[i] = (char *)malloc(sizeof(char)*200);
+     
+	ans=GetNextURL(data,url,result ,0);
+	strcpy(links[l++],result);
+
+    while(l<100)
+    {
+      ans=GetNextURL(data,url,result ,ans);
+      
+      for(int j=0;j<l;j++)
+      {
+        if(strcmp(result,links[j])==0)
+        {
+          flag=1;
+          break;
+        }
+      }
+      if(flag==0){
+       strcpy(links[l++],result);
+      }
+      else{
+       ans=GetNextURL(data,url,result ,ans);
+       flag=0;
+      }
+    }
+
+	for(int i=0;i<l;i++)
+	printf("\n%s",links[i]);
+}
 
 
 void Check_Arguments(int argc,char* argv[])  // function to check whether all arguments are correct or not!!
@@ -249,21 +294,6 @@ int main(int argc,char* argv[])
 {
     Check_Arguments(argc,argv);
     get_Page(argv[1]);
-
-    struct stat st;
-    stat("temp.txt", &st);
-    int File_Size = st.st_size;
-File_Size++;
-
-char *data = (char*)malloc(File_Size*sizeof(char));
-data = convertData();
-
-char *result = (char*)malloc(File_Size*sizeof(char));
-int ans = GetNextURL(data,argv[1],result,0);
-for(int i=0;i<20;i++)
-{
-printf("\n%s",result);
-ans = GetNextURL(data,argv[1],result,ans);
-}
+    Fetch_Url(argv[1]);
     
 }
