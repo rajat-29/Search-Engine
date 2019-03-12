@@ -7,6 +7,13 @@
 #define urlLength 1000
 #define Base_Url "www.chitkara.edu.in"
 
+struct LinkList  // structure for linked list
+{
+	char* url;
+	int depth;
+	struct LinkList *next;
+}*ListHead;
+
 int Check_Argument(int check)  // function to check wheater user has entered total 3 arguments or not!!
 {
     if(check==4)
@@ -213,10 +220,30 @@ char Transfer_File()  // function to shift data from temp file to new actual fil
 	fclose(newFileName);
 }
 
+void putInList(char **links)  // function to put all the links in the linked list!!
+{
+	struct LinkList *obj, *Listptr;
+	ListHead = (struct LinkList*)malloc(sizeof(struct LinkList));
+	Listptr = ListHead;
+	Listptr->url = links[0];
+	Listptr->next = 0;
+	for(int i=1;i<100;i++)
+	{
+	  obj = (struct LinkList*)malloc(sizeof(struct LinkList));
+	  obj->url = links[i];
+	  obj->next = 0;
+	  Listptr->next = obj;
+	  Listptr = Listptr->next;
+	}
+	while(ListHead->next != 0)  // printing all links!!
+	{
+ 	   printf("%s\n", ListHead->url);
+	   ListHead = ListHead->next;
+	}
+}
 
 
-
-void get_Page(char *url)  // function to fetch url from user and contact in urlBuffer and fetch page source code and add it to temp file
+void get_Page(char *url)  // function to fetch url from user and contact in urlBuffer and fetch page source code and add it to temp file!!
 {
     char urlBuffer[urlLength + 300] = {0};
     strcat(urlBuffer, "wget -O ");
@@ -225,6 +252,8 @@ void get_Page(char *url)  // function to fetch url from user and contact in urlB
     system(urlBuffer);
     Transfer_File();
 }
+
+
 
 void Fetch_Url(char *url)  // function will take url from nextGenurl function and put it in the array and check duplicay wheater url exits in array or not!!
 {
@@ -268,8 +297,7 @@ void Fetch_Url(char *url)  // function will take url from nextGenurl function an
       }
     }
 
-	for(int i=0;i<l;i++)
-	printf("\n%s",links[i]);
+	putInList(links);
 }
 
 
@@ -294,6 +322,5 @@ int main(int argc,char* argv[])
 {
     Check_Arguments(argc,argv);
     get_Page(argv[1]);
-    Fetch_Url(argv[1]);
-    
+    Fetch_Url(argv[1]);   
 }
