@@ -442,7 +442,7 @@ int main(int argc,char* argv[])
                 while((url=get_next_url(Head,depth))!=NULL)
                 {
                         get_Page(url);
-                        Fetch_Url(argv[1],depth+1);
+                        Fetch_Url(url,depth+1);
                 }
                 depth++;
         }
