@@ -4,6 +4,7 @@
   #include<sys/types.h>
   #include<sys/stat.h>
   FILE *file;
+  char basicWords[][25] = {"where","what","is","are","there","they","In","in","Our","and","all","you","your","for","the","to"};
 
   struct WordCount{		// structure for filename and count of word in the file
     char filename[200];
@@ -20,11 +21,11 @@
 
   struct buffer{			// buffer array to maintain indexes (In hashing key is used as first index of word)
     struct WordNode *start;	// key are stored as a,b,c,d etc
-  }Buffer[123];
+  }Buffer[146];
 
 
   struct WordCount *createWordCount(char *file){	//function will create a new countnode to store filename and count
-    struct WordCount *q = (struct WordCount*)malloc(sizeof(struct WordCount));
+    struct WordCount *q = (struct WordCount*)calloc(1,sizeof(struct WordCount));
     strcpy(q->filename,file);
     q->count = 1;
     q->next = NULL;
@@ -32,7 +33,7 @@
   }
 
   struct WordNode *createWordNode(char *arr){	//function will create a new wordnode to store word
-    struct WordNode *ptr = (struct WordNode*)malloc(sizeof(struct WordNode));
+    struct WordNode *ptr = (struct WordNode*)calloc(1,sizeof(struct WordNode));
     strcpy(ptr->word,arr);
     ptr->count=1;
     ptr->next = NULL;
@@ -75,7 +76,6 @@
       struct WordNode *p1 = createWordNode(arr);		//if word is no found will create new word node
       p1->start = createWordCount(file);
       ptr->next = p1;
-
     }
   }
 
@@ -84,7 +84,7 @@
       struct stat st;
       stat(fileName, &st);
       int fileSize = st.st_size, i = 0;	// inbuild function to find filesize
-      char *fileContent = (char*)malloc(sizeof(char) * fileSize), ch;
+      char *fileContent = (char*)calloc(sizeof(char) , fileSize), ch;
       file = fopen(fileName, "r");
       ch = getc(file);
       while(ch != EOF) {		// shifting data from file to string
@@ -96,19 +96,31 @@
       fileContent[i] = '\0';
       fclose(file);
       return fileContent;
+      free(fileContent);
   }
 
   void word_count(char *str,char *filename) //function take whole string as argument n convert it in words
   {
-    int i=0,flag=0,j=0;
+    int i=0,flag=0,j=0,check=0;
     char arr[50];
     while(str[i]!='\0'){
+      check = 0;
       if(str[i]==' '){
         if(flag==1){
           arr[j]='\0';
+        for(int z=0;z<16;z++)
+          {
+            if(!strcmp(arr,basicWords[z]))
+            {
+              check = 1;
+            }
+          }
+          if(check == 0)
           addtoList(arr,filename);	//function add the word to the linklist
           j=0;
+          arr[0]='\0';
           flag=0;
+
         }
       }
       else{
@@ -136,7 +148,7 @@
       }
       titleEnd = strpbrk(titleStart, "<");
       noOfChars = (titleEnd-titleStart);
-      subString = (char*)malloc(sizeof(char) * noOfChars);
+      subString = (char*)calloc(sizeof(char) , noOfChars);
       memcpy(subString, titleStart, noOfChars);
       *(subString + noOfChars) = '\0';
       word_count(subString,url);		// calling wordcount to seprate string in words
@@ -145,27 +157,24 @@
 
   void find_Meta(char *fileData,char *filename,char *url) // function to find meta tag
   {
-  	char *metaStart, *metaEnd, *subString;
+    char *titleStart, *titleEnd, *subString;
     int noOfChars;
-  	for(int i = 0;i<strlen(fileData);i++) {
-          	if(fileData[i] == '<' && fileData[i+1] == 'm') {
-                  metaStart = (strpbrk(&fileData[i], "\"\'") + 1);	//strpbrk will return the position of /
-                  if(metaStart) {
-                       metaEnd = strpbrk(metaStart, "/>");
-                       if(*metaStart == 'd' || *metaStart == 'a' || *metaStart == 'k') {
-                          metaStart = strpbrk(metaStart, "=");	// jump to position of =
-                          metaStart += 2;
-                          noOfChars = (metaEnd-metaStart);
-                          subString = (char*)malloc(sizeof(char) * noOfChars);
-                          memcpy(subString, metaStart, noOfChars);
-                          *(subString + noOfChars) = '\0';
-                          //printf("%s\n\n",subString);
-                          word_count(subString,url);		// calling wordcount to seprate string in words
-                          free(subString);
-                       }
-                  }
-          	}
-      	}
+
+    for(int i = 0;i<strlen(fileData);i++) {
+        if(fileData[i] == '<' && fileData[i+1] == 'm') {
+            titleStart = &fileData[i];
+            titleStart = strpbrk(titleStart, ">");	//strpbrk will return the position of >
+            titleStart++;
+            break;
+        }
+    }
+    titleEnd = strpbrk(titleStart, "<");
+    noOfChars = (titleEnd-titleStart);
+    subString = (char*)calloc(sizeof(char) , noOfChars);
+    memcpy(subString, titleStart, noOfChars);
+    *(subString + noOfChars) = '\0';
+    word_count(subString,url);		// calling wordcount to seprate string in words
+    free(subString);
   }
 
   void find_Heading(char *fileData,char *filename,char *url) // function to find all Heading
@@ -180,7 +189,7 @@
              	   headStart++;
   		   headEnd = strpbrk(headStart, "<");
               noOfChars = (headEnd-headStart);		//noofChars will be the total length of string
-              subStr = (char*)malloc(sizeof(char) * noOfChars);
+              subStr = (char*)calloc(sizeof(char) , noOfChars);
               memcpy(subStr, headStart, noOfChars);      //memcpy will copy string starting from headStart till noOfChars
               *(subStr + noOfChars) = '\0';
               word_count(subStr,url);	       // calling wordcount to seprate string in words
@@ -228,7 +237,7 @@
 
   char* find_url(char *filename)  //find url from the page
   {
-    char *url = (char*)malloc(sizeof(char) * 200),ch;
+    char *url = (char*)calloc(sizeof(char) , 200),ch;
     int i=0;
       file = fopen(filename, "r");
       ch = getc(file);
@@ -242,11 +251,16 @@
 
 int main(int argc,char* argv[]) {
 
-  char File_Name[10],ch,*url;
+  char File_Name[10],ch,*url,c[10];
+
   static int file_no=1;
-  for(int i=0;i<4;i++)
+  for(int i=0;i<9;i++)
   {
-    sprintf(File_Name,"%d",file_no);  // name5 of the file
+
+    strcpy(File_Name,"./temp/");
+    //sprintf(File_Name,"%d",file_no);
+     sprintf(c,"%d",file_no);
+    strcat(File_Name,c); // name5 of the file
     strcat(File_Name, ".txt"); // adding txt format
 
     struct stat st;
@@ -254,16 +268,18 @@ int main(int argc,char* argv[]) {
     int fileSize = st.st_size;
 
     file_no++;                  // increase file no
-    char *fileData = (char*)malloc(sizeof(char) * fileSize);
-    char *url1 = (char*)malloc(sizeof(char) * 200);  // file size
+    char *fileData = (char*)calloc(sizeof(char) , fileSize);
+    char *url1 = (char*)calloc(sizeof(char) , 200);  // file size
     fileData = convertDataInStr(File_Name);  // convert data into string
 
     url1 = find_url(File_Name); //find url
     find_Title(fileData,File_Name,url1);  // search tile tag
     find_Meta(fileData,File_Name,url1);  // search the meta tag
     find_Heading(fileData,File_Name,url1);  // search heading tag
+    free(fileData);
 
-    print();			// print the link list
-    saveData();			// save linlist in file*/
   }
+
+  print();			// print the link list
+  saveData();			// save linlist in file*/
 }
